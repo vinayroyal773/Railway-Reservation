@@ -1,62 +1,175 @@
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Railway Reservation System</title>
+
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <header>
-        <h1>Railway Reservation System</h1>
-        <p>Search railway routes and make reservations</p>
-    </header>
+<header>
+    <h1>Railway Reservation System</h1>
+    <p>Search railway routes and make reservations</p>
+</header>
 
-    <main>
+<main>
 
-        <section class="route-card">
-            <h2>Find Shortest Route</h2>
+    <!-- Route Search -->
 
-            <div class="form-group">
-                <label for="source">Source Station</label>
-                <select id="source">
-                    <option value="">Select source</option>
-                    <option value="Hyderabad">Hyderabad</option>
-                    <option value="Vijayawada">Vijayawada</option>
-                    <option value="Chennai">Chennai</option>
-                    <option value="Bengaluru">Bengaluru</option>
-                    <option value="Mumbai">Mumbai</option>
-                </select>
-            </div>
+    <section class="card">
 
-            <div class="form-group">
-                <label for="destination">Destination Station</label>
-                <select id="destination">
-                    <option value="">Select destination</option>
-                    <option value="Hyderabad">Hyderabad</option>
-                    <option value="Vijayawada">Vijayawada</option>
-                    <option value="Chennai">Chennai</option>
-                    <option value="Bengaluru">Bengaluru</option>
-                    <option value="Mumbai">Mumbai</option>
-                </select>
-            </div>
+        <h2>Find Shortest Route</h2>
 
-            <button id="searchRoute">Find Route</button>
+        <div class="form-group">
+            <label for="routeSource">Source Station</label>
 
-            <div id="result" class="result">
-                <p>Select source and destination to find a route.</p>
-            </div>
-        </section>
+            <select id="routeSource">
+                <option value="">Select source</option>
+                <option value="Hyderabad">Hyderabad</option>
+                <option value="Vijayawada">Vijayawada</option>
+                <option value="Chennai">Chennai</option>
+                <option value="Bengaluru">Bengaluru</option>
+                <option value="Mumbai">Mumbai</option>
+            </select>
+        </div>
 
-    </main>
+        <div class="form-group">
+            <label for="routeDestination">
+                Destination Station
+            </label>
 
-    <footer>
-        <p>Railway Reservation System</p>
-    </footer>
+            <select id="routeDestination">
+                <option value="">Select destination</option>
+                <option value="Hyderabad">Hyderabad</option>
+                <option value="Vijayawada">Vijayawada</option>
+                <option value="Chennai">Chennai</option>
+                <option value="Bengaluru">Bengaluru</option>
+                <option value="Mumbai">Mumbai</option>
+            </select>
+        </div>
 
-    <script src="script.js"></script>
+        <button id="searchRoute">
+            Find Route
+        </button>
+
+        <div id="routeResult" class="result">
+            <p>
+                Select source and destination to find a route.
+            </p>
+        </div>
+
+    </section>
+
+
+    <!-- Reservation -->
+
+    <section class="card">
+
+        <h2>Make Reservation</h2>
+
+        <div class="form-group">
+
+            <label for="passengerName">
+                Passenger Name
+            </label>
+
+            <input
+                type="text"
+                id="passengerName"
+                placeholder="Enter passenger name"
+            >
+
+        </div>
+
+        <div class="form-group">
+
+            <label for="trainNumber">
+                Train Number
+            </label>
+
+            <input
+                type="number"
+                id="trainNumber"
+                placeholder="Enter train number"
+            >
+
+        </div>
+
+        <div class="form-group">
+
+            <label for="seatCount">
+                Number of Seats
+            </label>
+
+            <input
+                type="number"
+                id="seatCount"
+                min="1"
+                placeholder="Enter number of seats"
+            >
+
+        </div>
+
+        <div class="form-group">
+
+            <label for="reservationSource">
+                Source Station
+            </label>
+
+            <select id="reservationSource">
+                <option value="">Select source</option>
+                <option value="Hyderabad">Hyderabad</option>
+                <option value="Vijayawada">Vijayawada</option>
+                <option value="Chennai">Chennai</option>
+                <option value="Bengaluru">Bengaluru</option>
+                <option value="Mumbai">Mumbai</option>
+            </select>
+
+        </div>
+
+        <div class="form-group">
+
+            <label for="reservationDestination">
+                Destination Station
+            </label>
+
+            <select id="reservationDestination">
+                <option value="">Select destination</option>
+                <option value="Hyderabad">Hyderabad</option>
+                <option value="Vijayawada">Vijayawada</option>
+                <option value="Chennai">Chennai</option>
+                <option value="Bengaluru">Bengaluru</option>
+                <option value="Mumbai">Mumbai</option>
+            </select>
+
+        </div>
+
+        <button id="makeReservation">
+            Reserve Ticket
+        </button>
+
+        <div id="reservationResult" class="result">
+            <p>
+                Enter passenger and journey details.
+            </p>
+        </div>
+
+    </section>
+
+</main>
+
+<footer>
+    <p>Railway Reservation System</p>
+</footer>
+
+<script src="script.js"></script>
 
 </body>
+
 </html>
