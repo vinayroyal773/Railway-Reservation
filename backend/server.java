@@ -53,11 +53,15 @@ public class server {
             errorRecovery.showRecoveryMessage();
         }
 
-        System.out.println("\n--- Reservation Details ---");
-        System.out.println("Passenger: " + name);
-        System.out.println("Train: " + trainNumber);
-        System.out.println("Seats: " + seats);
-        System.out.println("Route: " + source + " -> " + destination);
+       reservation booking = new reservation(
+        name,
+        trainNumber,
+        seats,
+        source,
+        destination
+);
+
+booking.displayReservation();
 
         scanner.close();
     }
