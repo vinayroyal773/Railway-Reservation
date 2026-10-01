@@ -4,8 +4,7 @@ import java.util.*;
 
 public class Routing {
 
-    // Represents a connection between two railway stations
-    static class Edge {
+    public static class Edge {
         String destination;
         int distance;
 
@@ -15,11 +14,33 @@ public class Routing {
         }
     }
 
-    // Finds the shortest route using Dijkstra's algorithm
-    public static void findShortestRoute(
+    public static class RouteResult {
+        private final List<String> route;
+        private final int distance;
+
+        public RouteResult(List<String> route, int distance) {
+            this.route = route;
+            this.distance = distance;
+        }
+
+        public List<String> getRoute() {
+            return route;
+        }
+
+        public int getDistance() {
+            return distance;
+        }
+    }
+
+    public static RouteResult findShortestRoute(
             Map<String, List<Edge>> network,
             String source,
             String destination) {
+
+        if (!network.containsKey(source) ||
+            !network.containsKey(destination)) {
+            return null;
+        }
 
         Map<String, Integer> distance = new HashMap<>();
         Map<String, String> previous = new HashMap<>();
@@ -55,7 +76,10 @@ public class Routing {
             }
         }
 
-        // Build the route
+        if (distance.get(destination) == Integer.MAX_VALUE) {
+            return null;
+        }
+
         List<String> route = new ArrayList<>();
         String current = destination;
 
@@ -66,26 +90,22 @@ public class Routing {
 
         Collections.reverse(route);
 
-        System.out.println("Source      : " + source);
-        System.out.println("Destination : " + destination);
-        System.out.println("Shortest Route: " + route);
-        System.out.println(
-                "Total Distance: " + distance.get(destination) + " km"
+        return new RouteResult(
+                route,
+                distance.get(destination)
         );
     }
 
-    public static void main(String[] args) {
+    public static Map<String, List<Edge>> createRailwayNetwork() {
 
         Map<String, List<Edge>> railwayNetwork = new HashMap<>();
 
-        // Create railway stations
         railwayNetwork.put("Hyderabad", new ArrayList<>());
         railwayNetwork.put("Vijayawada", new ArrayList<>());
         railwayNetwork.put("Chennai", new ArrayList<>());
         railwayNetwork.put("Bengaluru", new ArrayList<>());
         railwayNetwork.put("Mumbai", new ArrayList<>());
 
-        // Create railway connections
         railwayNetwork.get("Hyderabad")
                 .add(new Edge("Vijayawada", 275));
 
@@ -110,11 +130,25 @@ public class Routing {
         railwayNetwork.get("Mumbai")
                 .add(new Edge("Hyderabad", 710));
 
-        // Find route
-        findShortestRoute(
+        return railwayNetwork;
+    }
+
+    public static void main(String[] args) {
+
+        Map<String, List<Edge>> railwayNetwork =
+                createRailwayNetwork();
+
+        RouteResult result = findShortestRoute(
                 railwayNetwork,
                 "Hyderabad",
                 "Chennai"
+        );
+
+        System.out.println("Source      : Hyderabad");
+        System.out.println("Destination : Chennai");
+        System.out.println("Shortest Route: " + result.getRoute());
+        System.out.println(
+                "Total Distance: " + result.getDistance() + " km"
         );
     }
 }
