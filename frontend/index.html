@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Railway Reservation Network</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><h1>Reliable Railway Reservation</h1><p>Routing & Error Recovery Network</p></header>
+<main>
+<section class="card">
+<h2>Make Reservation</h2>
+<form id="reservationForm">
+<input id="name" placeholder="Passenger Name" required>
+<input id="source" placeholder="Source Station" value="StationA" required>
+<input id="destination" placeholder="Destination" value="Server" required>
+<input id="date" type="date" required>
+<button>Reserve Ticket</button>
+</form>
+<p id="reservationResult"></p>
+</section>
+
+<section class="card">
+<h2>Network Route</h2>
+<button id="routeBtn">Find Route: StationA → Server</button>
+<pre id="routeResult"></pre>
+</section>
+
+<section class="card">
+<h2>Go-Back-N Simulation</h2>
+<button id="gbnBtn">Simulate</button>
+<pre id="gbnResult"></pre>
+</section>
+</main>
+<script src="script.js"></script>
+</body>
+</html>
