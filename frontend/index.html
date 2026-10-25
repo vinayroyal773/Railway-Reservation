@@ -1,37 +1,243 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Railway Reservation Network</title>
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reliable Railway Reservation Network</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<header><h1>Reliable Railway Reservation</h1><p>Routing & Error Recovery Network</p></header>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-icon" aria-hidden="true">🚆</span>
+      <div>
+        <h1>Railway Reservation Network</h1>
+        <p>Routing &amp; Error Recovery</p>
+      </div>
+    </div>
+    <div id="status" class="status status-checking" title="Backend connection">
+      <span class="dot"></span><span id="statusText">Checking backend…</span>
+    </div>
+  </div>
+  <nav class="tabs" id="tabs" aria-label="Main navigation">
+    <a href="#reservations" data-page="reservations">Reservations</a>
+    <a href="#network" data-page="network">Network</a>
+    <a href="#routing" data-page="routing">Routing</a>
+    <a href="#distance-vector" data-page="distance-vector">Distance Vector</a>
+    <a href="#link-failure" data-page="link-failure">Link Failure</a>
+    <a href="#protocols" data-page="protocols">Protocols</a>
+  </nav>
+</header>
+
+<div id="offlineBanner" class="banner hidden">
+  Cannot reach the backend at <code id="offlineUrl"></code>.
+  Start it with <code>cd backend &amp;&amp; python app.py</code>, then
+  <button id="retryBtn" class="link-btn">retry</button>.
+</div>
+
 <main>
-<section class="card">
-<h2>Make Reservation</h2>
-<form id="reservationForm">
-<input id="name" placeholder="Passenger Name" required>
-<input id="source" placeholder="Source Station" value="StationA" required>
-<input id="destination" placeholder="Destination" value="Server" required>
-<input id="date" type="date" required>
-<button>Reserve Ticket</button>
-</form>
-<p id="reservationResult"></p>
-</section>
 
-<section class="card">
-<h2>Network Route</h2>
-<button id="routeBtn">Find Route: StationA → Server</button>
-<pre id="routeResult"></pre>
-</section>
+  <!-- ===================== RESERVATIONS ===================== -->
+  <section class="page" id="page-reservations">
+    <div class="grid two">
+      <div class="card">
+        <h2>Book a ticket</h2>
+        <form id="reservationForm" novalidate>
+          <label>Passenger name
+            <input id="resName" placeholder="e.g. Vinay Kumar" maxlength="80" required>
+          </label>
+          <div class="row">
+            <label>From
+              <select id="resSource" class="node-select" required></select>
+            </label>
+            <label>To
+              <select id="resDest" class="node-select" required></select>
+            </label>
+          </div>
+          <label>Travel date
+            <input id="resDate" type="date" required>
+          </label>
+          <div id="routePreview" class="route-preview muted">Choose stations to preview the network route.</div>
+          <button type="submit" class="btn primary" id="resSubmit">Reserve ticket</button>
+        </form>
+      </div>
 
-<section class="card">
-<h2>Go-Back-N Simulation</h2>
-<button id="gbnBtn">Simulate</button>
-<pre id="gbnResult"></pre>
-</section>
+      <div class="card">
+        <h2>Summary</h2>
+        <div class="stats">
+          <div class="stat"><span id="statTotal">0</span><label>Total</label></div>
+          <div class="stat ok"><span id="statConfirmed">0</span><label>Confirmed</label></div>
+          <div class="stat bad"><span id="statCancelled">0</span><label>Cancelled</label></div>
+        </div>
+        <p class="muted small">Reservations are stored in SQLite by the Flask backend. Cancelling keeps the record and marks it <b>CANCELLED</b>.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Reservations</h2>
+        <div class="filters">
+          <input id="resSearch" type="search" placeholder="Search name or station…">
+          <select id="resFilter">
+            <option value="ALL">All statuses</option>
+            <option value="CONFIRMED">Confirmed</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+          <button class="btn" id="resRefresh">Refresh</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Passenger</th><th>From</th><th>To</th><th>Date</th><th>Status</th><th></th></tr></thead>
+          <tbody id="resBody"></tbody>
+        </table>
+      </div>
+      <p id="resEmpty" class="empty hidden">No reservations found.</p>
+    </div>
+  </section>
+
+  <!-- ===================== NETWORK ===================== -->
+  <section class="page hidden" id="page-network">
+    <div class="card">
+      <h2>Network topology</h2>
+      <p class="muted">Stations and the central reservation server. Numbers on each link are routing costs.</p>
+      <div id="graphNetwork" class="graph"></div>
+    </div>
+    <div class="card">
+      <h2>Links</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Link</th><th>Cost</th><th>Delay</th><th>Packet loss</th></tr></thead>
+          <tbody id="linksBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== ROUTING ===================== -->
+  <section class="page hidden" id="page-routing">
+    <div class="card">
+      <h2>Shortest path (Dijkstra)</h2>
+      <form id="routeForm" class="inline-form">
+        <label>Source <select id="routeSource" class="node-select"></select></label>
+        <label>Destination <select id="routeDest" class="node-select"></select></label>
+        <button class="btn primary" type="submit">Find route</button>
+      </form>
+      <div id="routeSummary" class="result"></div>
+      <div id="graphRoute" class="graph"></div>
+    </div>
+    <div class="card">
+      <h2>Routing table <span id="routeTableNode" class="pill"></span></h2>
+      <p class="muted small" id="routeTableMeta"></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Destination</th><th>Next hop</th><th>Cost</th><th>Path</th></tr></thead>
+          <tbody id="routeTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== DISTANCE VECTOR ===================== -->
+  <section class="page hidden" id="page-distance-vector">
+    <div class="card">
+      <h2>Distance Vector simulation</h2>
+      <p class="muted">Run distributed Bellman-Ford until convergence, optionally failing a link to watch the network recover.</p>
+      <form id="dvForm" class="inline-form">
+        <label>Fail link <select id="dvFail"></select></label>
+        <label class="check"><input type="checkbox" id="dvPoison" checked> Poison reverse</label>
+        <button class="btn primary" type="submit">Run simulation</button>
+      </form>
+      <div id="dvSummary" class="stats"></div>
+      <div id="dvHistory"></div>
+    </div>
+    <div class="card hidden" id="dvTablesCard">
+      <div class="card-head">
+        <h2>Routing tables</h2>
+        <label class="inline">Node <select id="dvNode"></select></label>
+      </div>
+      <div class="grid two">
+        <div><h3>Before failure</h3><div class="table-wrap"><table><thead><tr><th>Dest</th><th>Next hop</th><th>Cost</th><th>Path</th></tr></thead><tbody id="dvBefore"></tbody></table></div></div>
+        <div><h3>After failure</h3><div class="table-wrap"><table><thead><tr><th>Dest</th><th>Next hop</th><th>Cost</th><th>Path</th></tr></thead><tbody id="dvAfter"></tbody></table></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== LINK FAILURE ===================== -->
+  <section class="page hidden" id="page-link-failure">
+    <div class="card">
+      <h2>Link failure &amp; recovery</h2>
+      <p class="muted">Break a link and see how Dijkstra reroutes traffic.</p>
+      <form id="lfForm" class="inline-form">
+        <label>Failed link <select id="lfLink"></select></label>
+        <label>Source <select id="lfSource" class="node-select"></select></label>
+        <label>Destination <select id="lfDest" class="node-select"></select></label>
+        <button class="btn danger" type="submit">Fail link</button>
+      </form>
+      <div id="lfSummary" class="result"></div>
+      <div id="graphFailure" class="graph"></div>
+      <div class="legend">
+        <span><i class="lg lg-path"></i> New path</span>
+        <span><i class="lg lg-old"></i> Original path</span>
+        <span><i class="lg lg-fail"></i> Failed link</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PROTOCOLS ===================== -->
+  <section class="page hidden" id="page-protocols">
+    <div class="card">
+      <h2>CRC error detection</h2>
+      <form id="crcForm" class="inline-form">
+        <label>Message (binary) <input id="crcMsg" value="1011001" pattern="[01]+" required></label>
+        <label>Generator (binary) <input id="crcGen" value="1101" pattern="[01]+" required></label>
+        <button class="btn primary" type="submit">Compute CRC</button>
+      </form>
+      <div id="crcResult" class="result"></div>
+    </div>
+
+    <div class="grid two">
+      <div class="card">
+        <h2>Sliding window</h2>
+        <form id="swForm" class="inline-form">
+          <label>Packets <input id="swPackets" type="number" min="1" max="60" value="8"></label>
+          <label>Window <input id="swWindow" type="number" min="1" max="20" value="3"></label>
+          <button class="btn primary" type="submit">Simulate</button>
+        </form>
+        <div id="swResult" class="result"></div>
+      </div>
+
+      <div class="card">
+        <h2>Go-Back-N</h2>
+        <form id="gbnForm" class="inline-form">
+          <label>Packets <input id="gbnPackets" type="number" min="1" max="60" value="8"></label>
+          <label>Window <input id="gbnWindow" type="number" min="1" max="20" value="3"></label>
+          <label>Lost # <input id="gbnLost" type="number" min="1" max="60" value="3"></label>
+          <button class="btn primary" type="submit">Simulate</button>
+        </form>
+        <div id="gbnResult" class="result"></div>
+      </div>
+    </div>
+  </section>
+
 </main>
-<script src="script.js"></script>
+
+<footer>Reliable Railway Reservation Network · Flask + SQLite backend</footer>
+
+<div id="toasts" class="toasts" aria-live="polite"></div>
+
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/api.js"></script>
+<script src="js/graph.js"></script>
+<script src="js/reservations.js"></script>
+<script src="js/network.js"></script>
+<script src="js/routing.js"></script>
+<script src="js/distance-vector.js"></script>
+<script src="js/link-failure.js"></script>
+<script src="js/protocols.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>
