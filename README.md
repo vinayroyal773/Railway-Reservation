@@ -11,7 +11,7 @@ Starter full-stack academic project.
 ## Run backend
 cd backend
 python -m venv venv
-Windows: venv\Scripts\activate
+venv\Scripts\activate
 pip install -r requirements.txt
 python app.py
 
@@ -39,7 +39,3 @@ Tables: `stations`, `links`, `reservations` (PNR, route, status, timestamps),
 Extra API: GET /api/stats, GET /api/events, GET/POST /api/performance,
 GET /api/reservations?status=CONFIRMED&q=asha
 
-## No Flask? Use the built-in server
-    cd backend
-    python server.py        # API + website at http://127.0.0.1:5000  (standard library only)
-    python tests/test_server.py   (from project root)
