@@ -134,7 +134,7 @@ tbody tr:hover { background: rgba(127,127,127,.07); }
 .cost-text { fill: var(--text); font-size: 12px; font-weight: 700; }
 .node circle, .node rect { fill: var(--node); stroke: var(--node-stroke); stroke-width: 2.5; }
 .node.server rect { fill: var(--primary); }
-.node text { fill: var(--text); font-size: 12px; font-weight: 700; pointer-events: none; }
+.node text { fill: var(--text); font-size: 11px; font-weight: 700; pointer-events: none; }
 .node.server text { fill: #fff; }
 .node.on-path circle, .node.on-path rect { stroke: var(--ok); stroke-width: 4; }
 .legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: .82rem; color: var(--muted); margin-top: 6px; }

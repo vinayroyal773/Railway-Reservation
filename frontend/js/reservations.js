@@ -21,7 +21,7 @@ const Reservations = (() => {
     const status = $("#resFilter").value;
     const shown = rows.filter(r =>
       (status === "ALL" || r.status === status) &&
-      (!q || [r.name, r.source, r.destination].some(v => String(v).toLowerCase().includes(q)))
+      (!q || [r.name, r.pnr, r.source, r.destination].some(v => String(v).toLowerCase().includes(q)))
     );
 
     $("#statTotal").textContent = rows.length;
@@ -30,7 +30,7 @@ const Reservations = (() => {
 
     $("#resBody").innerHTML = shown.map(r => `
       <tr>
-        <td>#${r.id}</td>
+        <td title="Booking #${r.id}"><code>${esc(r.pnr)}</code></td>
         <td>${esc(r.name)}</td>
         <td>${esc(r.source)}</td>
         <td>${esc(r.destination)}</td>
@@ -81,7 +81,7 @@ const Reservations = (() => {
     setBusy(btn, true, "Reserving…");
     try {
       const r = await Api.createReservation(data);
-      toast(`Reservation #${r.id} confirmed.`, "success");
+      toast(`Reservation confirmed. PNR ${r.pnr}`, "success");
       $("#resName").value = "";
       await load();
     } catch (err) {
@@ -104,7 +104,7 @@ const Reservations = (() => {
 
   function init() {
     const nodes = App.topology.nodes.map(n => ({ value: n, label: n }));
-    fillSelect($("#resSource"), nodes, "StationA");
+    fillSelect($("#resSource"), nodes, "Delhi");
     fillSelect($("#resDest"), nodes, "Server");
     $("#resDate").min = today();
     $("#resDate").value = today();

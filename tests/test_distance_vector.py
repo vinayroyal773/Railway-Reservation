@@ -19,17 +19,17 @@ def test_dv_matches_dijkstra_everywhere():
 
 def test_path_follows_next_hops():
     tables, _ = run_dv(get_graph())
-    assert get_path(tables, "StationA", "Server")[0] == "StationA"
-    assert get_path(tables, "StationA", "Server")[-1] == "Server"
+    assert get_path(tables, "Delhi", "Server")[0] == "Delhi"
+    assert get_path(tables, "Delhi", "Server")[-1] == "Server"
 
 
 def test_link_failure_reroutes():
     before_g = get_graph()
-    after_g = get_graph([("StationC", "Server")])
+    after_g = get_graph([("Nagpur", "Server")])
     before, after, _, _ = simulate_failure(before_g, after_g)
-    path = get_path(after, "StationB", "Server")
+    path = get_path(after, "Bhopal", "Server")
     assert path[-1] == "Server"
-    assert ("StationC", "Server") not in list(zip(path, path[1:]))
+    assert ("Nagpur", "Server") not in list(zip(path, path[1:]))
     for s in after_g:
         for d in after_g:
             cost, _ = dijkstra(after_g, s, d)

@@ -34,7 +34,7 @@ const Routing = (() => {
 
   function init() {
     const nodes = App.topology.nodes.map(n => ({ value: n, label: n }));
-    fillSelect($("#routeSource"), nodes, "StationA");
+    fillSelect($("#routeSource"), nodes, "Delhi");
     fillSelect($("#routeDest"), nodes, "Server");
     $("#routeForm").addEventListener("submit", run);
     run();

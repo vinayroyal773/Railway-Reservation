@@ -31,7 +31,7 @@ const DistanceVector = (() => {
            <p class="muted small">Each round shows how many routing-table entries changed; the network has converged when changes reach 0.</p>`
         : '<p class="muted small">No link failed — showing the initial converged tables.</p>';
 
-      fillSelect($("#dvNode"), Object.keys(result.tables_before).map(n => ({ value: n, label: n })), "StationA");
+      fillSelect($("#dvNode"), Object.keys(result.tables_before).map(n => ({ value: n, label: n })), "Delhi");
       $("#dvTablesCard").classList.remove("hidden");
       renderTables();
     } catch (err) {
@@ -44,7 +44,7 @@ const DistanceVector = (() => {
   function init() {
     const opts = [{ value: "", label: "None" }].concat(
       App.topology.links.map(l => ({ value: `${l.a}|${l.b}`, label: linkLabel(l) })));
-    fillSelect($("#dvFail"), opts, "StationB|StationC");
+    fillSelect($("#dvFail"), opts, "Bhopal|Nagpur");
     $("#dvForm").addEventListener("submit", run);
     $("#dvNode").addEventListener("change", renderTables);
   }

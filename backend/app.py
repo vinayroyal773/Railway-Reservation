@@ -13,32 +13,10 @@ from crc import crc_check
 from sliding_window import simulate_sliding_window
 from go_back_n import simulate_go_back_n
 from link_failure import remove_link
+import db
 
 app = Flask(__name__)
 CORS(app)
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB = os.path.join(BASE_DIR, "..", "database", "railway.db")
-
-
-# ---------------------------------------------------------------- helpers
-def get_db():
-    return sqlite3.connect(DB)
-
-
-def init_db():
-    os.makedirs(os.path.dirname(DB), exist_ok=True)
-    conn = get_db()
-    conn.execute('''CREATE TABLE IF NOT EXISTS reservations(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        source TEXT NOT NULL,
-        destination TEXT NOT NULL,
-        travel_date TEXT NOT NULL,
-        status TEXT DEFAULT 'CONFIRMED')''')
-    conn.commit()
-    conn.close()
-
 
 def error(message, code=400):
     return jsonify({"error": message}), code
@@ -81,7 +59,7 @@ def topology():
 @app.post("/api/route")
 def route():
     data = request.get_json(silent=True) or {}
-    source = data.get("source", "StationA")
+    source = data.get("source", "Delhi")
     destination = data.get("destination", "Server")
     bad = unknown_nodes(source, destination)
     if bad:
@@ -118,6 +96,10 @@ def distance_vector():
     graph_after = get_graph([tuple(fail)]) if fail else graph_before
     before, after, h_before, h_after = simulate_failure(
         graph_before, graph_after, poison_reverse=poison)
+    if fail:
+        db.record_event("LINK_FAILURE", fail[0], fail[1], "from distance-vector run")
+        db.record_event("DV_CONVERGENCE", fail[0], fail[1],
+                        f"re-converged in {rounds_to_converge(h_after)} rounds")
     return jsonify({
         "poison_reverse": poison,
         "failed_link": fail,
@@ -170,8 +152,8 @@ def go_back_n():
 @app.post("/api/link-failure")
 def link_failure():
     data = request.get_json(silent=True) or {}
-    a, b = data.get("from", "StationB"), data.get("to", "StationC")
-    source = data.get("source", "StationA")
+    a, b = data.get("from", "Bhopal"), data.get("to", "Nagpur")
+    source = data.get("source", "Delhi")
     destination = data.get("destination", "Server")
     bad = unknown_nodes(a, b, source, destination)
     if bad:
@@ -180,27 +162,25 @@ def link_failure():
         return error(f"no direct link between {a} and {b}")
     graph = remove_link(GRAPH, a, b)
     distance, path = dijkstra(graph, source, destination)
+    db.record_event("LINK_FAILURE", a, b, f"link {a}-{b} failed")
+    db.record_event("ROUTE_CHANGE", source, destination,
+                    " > ".join(path) if path else "no route available")
     return jsonify({"failed_link": [a, b], "new_path": path,
                     "distance": distance})
 
 
 @app.get("/api/reservations")
 def reservations():
-    conn = get_db()
-    rows = conn.execute(
-        "SELECT id, name, source, destination, travel_date, status "
-        "FROM reservations ORDER BY id DESC").fetchall()
-    conn.close()
-    return jsonify([{"id": r[0], "name": r[1], "source": r[2],
-                     "destination": r[3], "date": r[4], "status": r[5]}
-                    for r in rows])
+    return jsonify(db.list_reservations(
+        status=request.args.get("status") or None,
+        search=request.args.get("q") or None))
 
 
 @app.post("/api/reservations")
 def create_reservation():
     data = request.get_json(silent=True) or {}
     required = ["name", "source", "destination", "date"]
-    if not all(data.get(x) for x in required):
+    if not all(str(data.get(x, "")).strip() for x in required):
         return error("name, source, destination and date are required")
     bad = unknown_nodes(data["source"], data["destination"])
     if bad:
@@ -212,32 +192,67 @@ def create_reservation():
     except ValueError:
         return error("date must be in YYYY-MM-DD format")
 
-    conn = get_db()
-    cur = conn.execute(
-        "INSERT INTO reservations(name,source,destination,travel_date,status) "
-        "VALUES(?,?,?,?,?)",
-        (data["name"], data["source"], data["destination"],
-         data["date"], "CONFIRMED"))
-    conn.commit()
-    rid = cur.lastrowid
-    conn.close()
-    return jsonify({"message": "Reservation created", "id": rid}), 201
+    cost, path = dijkstra(GRAPH, data["source"], data["destination"])
+    if not path:
+        return error("no route between these stations", 409)
+    try:
+        rid, pnr = db.create_reservation(data["name"], data["source"],
+                                         data["destination"], data["date"],
+                                         path, cost)
+    except sqlite3.IntegrityError as e:
+        return error(f"could not save reservation: {e}")
+    return jsonify({"message": "Reservation created", "id": rid, "pnr": pnr,
+                    "route": path, "route_cost": cost}), 201
 
 
 @app.delete("/api/reservations/<int:rid>")
 def cancel_reservation(rid):
-    conn = get_db()
-    cur = conn.execute(
-        "UPDATE reservations SET status='CANCELLED' WHERE id=?", (rid,))
-    conn.commit()
-    changed = cur.rowcount
-    conn.close()
-    if not changed:
+    result = db.cancel_reservation(rid)
+    if result == "not_found":
         return error("reservation not found", 404)
+    if result == "already_cancelled":
+        return error("reservation is already cancelled", 409)
     return jsonify({"message": "Reservation cancelled", "id": rid})
 
 
-init_db()
+@app.get("/api/stats")
+def stats():
+    return jsonify(db.stats())
+
+
+@app.get("/api/events")
+def events():
+    return jsonify(db.list_events())
+
+
+@app.get("/api/performance")
+def performance_list():
+    runs, summary = db.list_performance()
+    return jsonify({"runs": runs, "summary": summary})
+
+
+@app.post("/api/performance")
+def performance_add():
+    data = request.get_json(silent=True) or {}
+    protocol = str(data.get("protocol", "")).upper()
+    if protocol not in ("GO_BACK_N", "SLIDING_WINDOW", "STOP_AND_WAIT"):
+        return error("protocol must be GO_BACK_N, SLIDING_WINDOW or STOP_AND_WAIT")
+    try:
+        sent = to_int(data.get("packets_sent"), "packets_sent", 0)
+        lost = to_int(data.get("packets_lost", 0), "packets_lost", 0)
+        delay = float(data.get("delay_ms"))
+        window = (to_int(data["window_size"], "window_size")
+                  if data.get("window_size") is not None else None)
+    except (TypeError, ValueError) as e:
+        return error(str(e))
+    if lost > sent or delay < 0:
+        return error("packets_lost must be <= packets_sent and delay_ms >= 0")
+    rid, metrics = db.record_performance(protocol, sent, lost, delay, window,
+                                         data.get("notes"))
+    return jsonify({"id": rid, **metrics}), 201
+
+
+db.init_db()
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000, debug=True)

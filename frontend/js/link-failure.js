@@ -46,8 +46,8 @@ const LinkFailure = (() => {
 
   function init() {
     const nodes = App.topology.nodes.map(n => ({ value: n, label: n }));
-    fillSelect($("#lfLink"), App.topology.links.map(l => ({ value: `${l.a}|${l.b}`, label: linkLabel(l) })), "StationB|StationC");
-    fillSelect($("#lfSource"), nodes, "StationA");
+    fillSelect($("#lfLink"), App.topology.links.map(l => ({ value: `${l.a}|${l.b}`, label: linkLabel(l) })), "Bhopal|Nagpur");
+    fillSelect($("#lfSource"), nodes, "Delhi");
     fillSelect($("#lfDest"), nodes, "Server");
     $("#lfForm").addEventListener("submit", run);
     Graph.render($("#graphFailure"), App.topology);

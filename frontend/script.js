@@ -17,7 +17,7 @@ document.getElementById("reservationForm").addEventListener("submit", async (e)=
 
 document.getElementById("routeBtn").onclick=async()=>{
   try{
-    const r=await fetch(API+"/api/route",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({source:"StationA",destination:"Server"})});
+    const r=await fetch(API+"/api/route",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({source:"Delhi",destination:"Server"})});
     document.getElementById("routeResult").textContent=JSON.stringify(await r.json(),null,2);
   }catch(e){document.getElementById("routeResult").textContent="Backend not running."}
 };

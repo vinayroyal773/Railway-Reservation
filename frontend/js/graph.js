@@ -5,8 +5,8 @@ const Graph = (() => {
 
   // Hand-tuned layout for the default topology; unknown nodes fall back to a circle.
   const FIXED = {
-    StationA: [70, 160], StationB: [230, 65], StationD: [230, 255],
-    StationC: [450, 65], StationE: [450, 255], Server: [610, 160]
+    Delhi: [70, 160], Bhopal: [230, 65], Mumbai: [230, 255],
+    Nagpur: [450, 65], Hyderabad: [450, 255], Server: [610, 160]
   };
 
   function layout(nodes) {
@@ -74,9 +74,9 @@ const Graph = (() => {
       const isServer = n === "Server";
       const g = make("g", { class: "node" + (isServer ? " server" : "") + (onPath.has(n) ? " on-path" : "") });
       if (isServer) g.appendChild(make("rect", { x: x - 34, y: y - 22, width: 68, height: 44, rx: 8 }));
-      else g.appendChild(make("circle", { cx: x, cy: y, r: 26 }));
-      const label = make("text", { x, y: y + 4, "text-anchor": "middle" });
-      label.textContent = isServer ? "Server" : n.replace("Station", "St. ");
+      else g.appendChild(make("circle", { cx: x, cy: y, r: 32 }));
+      const label = make("text", { x, y: y + 4, "text-anchor": "middle", "font-size": isServer ? 14 : 11 });
+      label.textContent = isServer ? "Server" : n;
       g.appendChild(label);
       svg.appendChild(g);
     });

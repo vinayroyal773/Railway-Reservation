@@ -26,3 +26,20 @@ backend/      Flask APIs and networking algorithms
 database/     SQLite database
 simulation/   Performance/network simulation helpers
 docs/         Project documentation
+
+## Database (SQLite)
+Schema: `database/schema.sql`. Data access: `backend/db.py`.
+Tables: `stations`, `links`, `reservations` (PNR, route, status, timestamps),
+`network_events` (link failures, route changes), `performance_runs` (loss/delay/throughput).
+
+    python database/init_db.py            # create or upgrade (keeps existing reservations)
+    python database/init_db.py --reset --demo   # fresh DB with sample data
+    python tests/test_database.py
+
+Extra API: GET /api/stats, GET /api/events, GET/POST /api/performance,
+GET /api/reservations?status=CONFIRMED&q=asha
+
+## No Flask? Use the built-in server
+    cd backend
+    python server.py        # API + website at http://127.0.0.1:5000  (standard library only)
+    python tests/test_server.py   (from project root)
